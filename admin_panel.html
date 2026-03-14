@@ -1,0 +1,1342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>FishFresh — Admin Panel</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{font-family:'Plus Jakarta Sans',sans-serif;background:#0F1623;color:#E2E8F0;}
+  ::-webkit-scrollbar{width:6px;height:6px;}
+  ::-webkit-scrollbar-track{background:#1A2436;}
+  ::-webkit-scrollbar-thumb{background:#2D3E55;border-radius:6px;}
+  .sidebar{position:fixed;top:0;left:0;width:240px;height:100vh;background:#0A1020;border-right:1px solid #1E2D42;display:flex;flex-direction:column;z-index:100;}
+  .main{margin-left:240px;min-height:100vh;background:#0F1623;}
+  .topbar{background:#0A1020;border-bottom:1px solid #1E2D42;padding:0 28px;height:64px;display:flex;align-items:center;gap:16px;position:sticky;top:0;z-index:50;}
+  .content{padding:28px;}
+  .card{background:#131E2E;border:1px solid #1E2D42;border-radius:16px;padding:24px;}
+  .card-sm{background:#131E2E;border:1px solid #1E2D42;border-radius:12px;padding:16px;}
+  .btn-primary{background:linear-gradient(135deg,#FF6B4A,#FF8C6E);color:#fff;border:none;padding:10px 20px;border-radius:10px;font-family:'Plus Jakarta Sans',sans-serif;font-weight:700;font-size:14px;cursor:pointer;transition:all .2s;}
+  .btn-primary:hover{transform:translateY(-1px);box-shadow:0 8px 20px rgba(255,107,74,.35);}
+  .btn-outline{background:transparent;color:#94A3B8;border:1px solid #2D3E55;padding:8px 16px;border-radius:10px;font-family:'Plus Jakarta Sans',sans-serif;font-weight:600;font-size:13px;cursor:pointer;transition:all .2s;}
+  .btn-outline:hover{border-color:#FF6B4A;color:#FF6B4A;}
+  .btn-danger{background:rgba(239,68,68,.1);color:#EF4444;border:1px solid rgba(239,68,68,.2);padding:8px 14px;border-radius:8px;font-family:'Plus Jakarta Sans',sans-serif;font-weight:600;font-size:12px;cursor:pointer;}
+  .btn-success{background:rgba(34,197,94,.1);color:#22C55E;border:1px solid rgba(34,197,94,.2);padding:8px 14px;border-radius:8px;font-family:'Plus Jakarta Sans',sans-serif;font-weight:600;font-size:12px;cursor:pointer;}
+  .input{background:#0A1020;border:1px solid #2D3E55;border-radius:10px;padding:11px 14px;color:#E2E8F0;font-family:'Plus Jakarta Sans',sans-serif;font-size:14px;outline:none;width:100%;transition:border .2s;}
+  .input:focus{border-color:#FF6B4A;}
+  .select{background:#0A1020;border:1px solid #2D3E55;border-radius:10px;padding:11px 14px;color:#E2E8F0;font-family:'Plus Jakarta Sans',sans-serif;font-size:14px;outline:none;cursor:pointer;}
+  .select:focus{border-color:#FF6B4A;}
+  .badge{display:inline-flex;align-items:center;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;}
+  .badge-success{background:rgba(34,197,94,.12);color:#22C55E;}
+  .badge-warning{background:rgba(234,179,8,.12);color:#EAB308;}
+  .badge-blue{background:rgba(59,130,246,.12);color:#3B82F6;}
+  .badge-orange{background:rgba(255,107,74,.12);color:#FF6B4A;}
+  .badge-gray{background:rgba(148,163,184,.1);color:#94A3B8;}
+  table{width:100%;border-collapse:collapse;}
+  th{text-align:left;padding:14px 16px;color:#64748B;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;border-bottom:1px solid #1E2D42;}
+  td{padding:14px 16px;border-bottom:1px solid #1A2436;font-size:14px;color:#CBD5E1;}
+  tr:last-child td{border-bottom:none;}
+  tr:hover td{background:#1A2436;}
+  .nav-item{display:flex;align-items:center;gap:12px;padding:11px 20px;border-radius:10px;margin:2px 12px;cursor:pointer;color:#64748B;font-size:14px;font-weight:600;transition:all .2s;}
+  .nav-item:hover{background:#1A2436;color:#CBD5E1;}
+  .nav-item.active{background:linear-gradient(135deg,rgba(255,107,74,.15),rgba(255,107,74,.05));color:#FF6B4A;border:1px solid rgba(255,107,74,.2);}
+  .stat-card{background:linear-gradient(135deg,#131E2E,#1A2436);border:1px solid #1E2D42;border-radius:16px;padding:22px;position:relative;overflow:hidden;}
+  .stat-card::before{content:'';position:absolute;top:-20px;right:-20px;width:80px;height:80px;border-radius:50%;opacity:.08;}
+  .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);backdrop-filter:blur(4px);z-index:200;display:flex;align-items:center;justify-content:center;}
+  .modal{background:#131E2E;border:1px solid #1E2D42;border-radius:20px;padding:28px;width:520px;max-height:90vh;overflow-y:auto;max-width:95vw;}
+  .toggle{position:relative;display:inline-block;width:46px;height:24px;}
+  .toggle input{opacity:0;width:0;height:0;}
+  .slider{position:absolute;cursor:pointer;inset:0;background:#2D3E55;border-radius:30px;transition:.3s;}
+  .slider:before{position:absolute;content:'';height:18px;width:18px;left:3px;bottom:3px;background:white;border-radius:50%;transition:.3s;}
+  input:checked+.slider{background:linear-gradient(135deg,#FF6B4A,#FF8C6E);}
+  input:checked+.slider:before{transform:translateX(22px);}
+  .otp-box{background:#0A1020;border:2px solid #22C55E;border-radius:12px;padding:14px 20px;display:flex;align-items:center;justify-content:space-between;}
+  .fish-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;}
+  .fish-opt{border:2px solid #2D3E55;border-radius:12px;padding:12px 8px;text-align:center;cursor:pointer;transition:all .2s;background:#0A1020;}
+  .fish-opt:hover{border-color:#FF6B4A;}
+  .fish-opt.selected{border-color:#FF6B4A;background:rgba(255,107,74,.08);}
+  .progress-bar{background:#1E2D42;border-radius:10px;height:8px;overflow:hidden;}
+  .progress-fill{height:100%;border-radius:10px;background:linear-gradient(90deg,#FF6B4A,#FF8C6E);}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(12px);}to{opacity:1;transform:translateY(0);}}
+  .fade-in{animation:fadeIn .35s ease forwards;}
+  .label{display:block;font-size:12px;font-weight:700;color:#64748B;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;}
+  .section-title{font-size:18px;font-weight:800;color:#F1F5F9;letter-spacing:-.3px;}
+  .divider{border:none;border-top:1px solid #1E2D42;margin:20px 0;}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useEffect, useRef } = React;
+
+// ─── MOCK DATA ─────────────────────────────────────────────
+const initProducts = [
+  {id:1, name:'Rohu',        emoji:'🐟', category:'Freshwater', price:260, stock:18, active:true,  custom:false},
+  {id:2, name:'Pomfret',     emoji:'🐡', category:'Saltwater',  price:420, stock:10, active:true,  custom:false},
+  {id:3, name:'Tiger Prawns',emoji:'🦐', category:'Prawns',     price:480, stock:8,  active:true,  custom:false},
+  {id:4, name:'Mud Crab',    emoji:'🦀', category:'Crab',       price:650, stock:5,  active:true,  custom:false},
+  {id:5, name:'Seer Fish',   emoji:'🐟', category:'Saltwater',  price:580, stock:12, active:true,  custom:false},
+  {id:6, name:'Mackerel',    emoji:'🐠', category:'Saltwater',  price:200, stock:25, active:true,  custom:false},
+  {id:7, name:'Katla',       emoji:'🐟', category:'Freshwater', price:280, stock:20, active:true,  custom:false},
+  {id:8, name:'Sardine',     emoji:'🐟', category:'Saltwater',  price:160, stock:30, active:true,  custom:false},
+];
+
+const initOrders = [
+  {id:'#FF2431', customer:'Rajan Kumar',   phone:'9876543210', address:'Kowdiar, Trivandrum',    items:'Rohu 1.5kg, Prawns 0.5kg', total:630, status:'Pending',    time:'9:12 AM'},
+  {id:'#FF2432', customer:'Sunitha Menon', phone:'9845123456', address:'Pattom, Trivandrum',      items:'Pomfret 1kg, Sardine 1kg', total:580, status:'Delivered',  time:'8:40 AM'},
+  {id:'#FF2433', customer:'Mohammed Aziz', phone:'9744567890', address:'Thampanoor, Trivandrum',  items:'Seer Fish 2kg',           total:1160,status:'Delivered',  time:'8:05 AM'},
+  {id:'#FF2434', customer:'Lakshmi Nair',  phone:'9562345678', address:'Vellayambalam, Trivandrum',items:'Katla 1kg, Crab 0.5kg',  total:605, status:'Pending',    time:'9:35 AM'},
+  {id:'#FF2435', customer:'Thomas George', phone:'9446789012', address:'Ambalamukku, Trivandrum', items:'Mackerel 2kg, Prawns 1kg',total:720, status:'Out for Delivery',time:'9:00 AM'},
+  {id:'#FF2436', customer:'Priya Pillai',  phone:'9388765432', address:'Kesavadasapuram, TVM',   items:'Rohu 2kg',                total:520, status:'Confirmed',   time:'9:48 AM'},
+];
+
+const initCustomers = [
+  {id:1, name:'Rajan Kumar',   phone:'9876543210', address:'Kowdiar, Trivandrum',    orders:8,  total:4280, joined:'Jan 2026'},
+  {id:2, name:'Sunitha Menon', phone:'9845123456', address:'Pattom, Trivandrum',     orders:5,  total:2900, joined:'Feb 2026'},
+  {id:3, name:'Mohammed Aziz', phone:'9744567890', address:'Thampanoor, Trivandrum', orders:12, total:7600, joined:'Jan 2026'},
+  {id:4, name:'Lakshmi Nair',  phone:'9562345678', address:'Vellayambalam, TVM',     orders:3,  total:1560, joined:'Mar 2026'},
+  {id:5, name:'Thomas George', phone:'9446789012', address:'Ambalamukku, TVM',       orders:6,  total:3240, joined:'Feb 2026'},
+  {id:6, name:'Priya Pillai',  phone:'9388765432', address:'Kesavadasapuram, TVM',   orders:9,  total:5100, joined:'Jan 2026'},
+];
+
+const FISH_PRESETS = [
+  {emoji:'🐟',name:'Rohu'},{emoji:'🐡',name:'Pomfret'},{emoji:'🦐',name:'Tiger Prawns'},
+  {emoji:'🦀',name:'Mud Crab'},{emoji:'🐟',name:'Seer Fish'},{emoji:'🐠',name:'Mackerel'},
+  {emoji:'🐟',name:'Katla'},{emoji:'🐟',name:'Sardine'},{emoji:'🦐',name:'Small Prawns'},
+  {emoji:'🦀',name:'Blue Crab'},{emoji:'🐟',name:'Tilapia'},{emoji:'🐟',name:'Tuna'},
+  {emoji:'🦑',name:'Squid'},{emoji:'🦞',name:'Lobster'},{emoji:'🐟',name:'Red Snapper'},
+];
+
+// ─── HELPERS ───────────────────────────────────────────────
+function Badge({type, children}) {
+  const map = {success:'badge-success',warning:'badge-warning',blue:'badge-blue',orange:'badge-orange',gray:'badge-gray'};
+  return <span className={`badge ${map[type]||'badge-gray'}`}>{children}</span>;
+}
+
+function statusBadge(s) {
+  const m = {
+    'Delivered':<Badge type="success">✓ Delivered</Badge>,
+    'Pending':<Badge type="warning">● Pending</Badge>,
+    'Out for Delivery':<Badge type="blue">🛵 Out for Delivery</Badge>,
+    'Confirmed':<Badge type="orange">✔ Confirmed</Badge>,
+    'Cancelled':<Badge type="gray">✕ Cancelled</Badge>,
+  };
+  return m[s] || <Badge type="gray">{s}</Badge>;
+}
+
+function Modal({onClose, title, children}) {
+  return (
+    <div className="modal-overlay" onClick={e=>{if(e.target===e.currentTarget)onClose();}}>
+      <div className="modal fade-in">
+        <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:24}}>
+          <div style={{fontSize:18,fontWeight:800,color:'#F1F5F9'}}>{title}</div>
+          <button onClick={onClose} style={{background:'none',border:'none',color:'#64748B',fontSize:22,cursor:'pointer',lineHeight:1}}>×</button>
+        </div>
+        {children}
+      </div>
+    </div>
+  );
+}
+
+// ─── SIDEBAR ───────────────────────────────────────────────
+function Sidebar({page, setPage}) {
+  const nav = [
+    {id:'dashboard',   icon:'📊', label:'Dashboard'},
+    {id:'products',    icon:'🐟', label:'Products'},
+    {id:'orders',      icon:'📦', label:'Orders'},
+    {id:'customers',   icon:'👥', label:'Customers'},
+    {id:'report',      icon:'📈', label:'Daily Report'},
+    {id:'servicearea', icon:'📍', label:'Service Area'},
+  ];
+  return (
+    <div className="sidebar">
+      <div style={{padding:'24px 20px 16px',borderBottom:'1px solid #1E2D42'}}>
+        <div style={{display:'flex',alignItems:'center',gap:10}}>
+          <div style={{width:38,height:38,background:'linear-gradient(135deg,#FF6B4A,#FF8C6E)',borderRadius:10,display:'flex',alignItems:'center',justifyContent:'center',fontSize:20}}>🐟</div>
+          <div>
+            <div style={{fontWeight:800,fontSize:15,color:'#F1F5F9',letterSpacing:'-.2px'}}>FishFresh</div>
+            <div style={{fontSize:10,color:'#64748B',fontWeight:600,letterSpacing:.5}}>ADMIN PANEL</div>
+          </div>
+        </div>
+      </div>
+      <div style={{flex:1,padding:'12px 0',overflowY:'auto'}}>
+        {nav.map(n=>(
+          <div key={n.id} className={`nav-item ${page===n.id?'active':''}`} onClick={()=>setPage(n.id)}>
+            <span style={{fontSize:16}}>{n.icon}</span>
+            <span>{n.label}</span>
+            {n.id==='orders' && <span style={{marginLeft:'auto',background:'#FF6B4A',color:'white',borderRadius:20,padding:'1px 7px',fontSize:11,fontWeight:800}}>2</span>}
+          </div>
+        ))}
+      </div>
+      <div style={{padding:'16px 20px',borderTop:'1px solid #1E2D42'}}>
+        <div style={{display:'flex',alignItems:'center',gap:10}}>
+          <div style={{width:34,height:34,background:'#1A2436',borderRadius:50,display:'flex',alignItems:'center',justifyContent:'center',fontSize:18}}>👤</div>
+          <div>
+            <div style={{fontSize:13,fontWeight:700,color:'#CBD5E1'}}>Admin</div>
+            <div style={{fontSize:11,color:'#64748B'}}>admin@fishfresh.in</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── DASHBOARD ─────────────────────────────────────────────
+function Dashboard() {
+  const stats = [
+    {label:"Today's Orders",    value:24,  icon:'📦', color:'#FF6B4A', change:'+4 from yesterday'},
+    {label:"Today's Revenue",   value:'₹14,280', icon:'💰', color:'#22C55E', change:'+₹2,100 from yesterday'},
+    {label:'Delivered',         value:18,  icon:'✅', color:'#3B82F6', change:'75% completion'},
+    {label:'Pending Delivery',  value:6,   icon:'🛵', color:'#EAB308', change:'3 assigned'},
+  ];
+  const topFish = [
+    {name:'Rohu',         sold:45, revenue:11700, pct:90},
+    {name:'Tiger Prawns', sold:28, revenue:13440, pct:56},
+    {name:'Pomfret',      sold:22, revenue:9240,  pct:44},
+    {name:'Seer Fish',    sold:18, revenue:10440, pct:36},
+    {name:'Mackerel',     sold:35, revenue:7000,  pct:70},
+  ];
+  return (
+    <div className="fade-in">
+      <div style={{marginBottom:28}}>
+        <div className="section-title">Good morning, Admin 👋</div>
+        <div style={{color:'#64748B',marginTop:4,fontSize:14}}>Thursday, 12 March 2026 — Here's what's happening today</div>
+      </div>
+      <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:16,marginBottom:28}}>
+        {stats.map((s,i)=>(
+          <div key={i} className="stat-card">
+            <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:16}}>
+              <div style={{fontSize:28}}>{s.icon}</div>
+              <div style={{fontSize:11,color:'#64748B',background:'#1E2D42',padding:'3px 10px',borderRadius:20,fontWeight:600}}>{s.change}</div>
+            </div>
+            <div style={{fontSize:30,fontWeight:800,color:s.color,letterSpacing:'-1px'}}>{s.value}</div>
+            <div style={{fontSize:13,color:'#64748B',marginTop:4,fontWeight:600}}>{s.label}</div>
+          </div>
+        ))}
+      </div>
+      <div style={{display:'grid',gridTemplateColumns:'1.4fr 1fr',gap:20}}>
+        <div className="card">
+          <div style={{fontWeight:800,color:'#F1F5F9',marginBottom:20,fontSize:15}}>🔥 Top Selling Fish Today</div>
+          {topFish.map((f,i)=>(
+            <div key={i} style={{marginBottom:16}}>
+              <div style={{display:'flex',justifyContent:'space-between',marginBottom:6}}>
+                <span style={{color:'#CBD5E1',fontWeight:600,fontSize:13}}>{f.name}</span>
+                <div style={{display:'flex',gap:14}}>
+                  <span style={{color:'#64748B',fontSize:12}}>{f.sold} sold</span>
+                  <span style={{color:'#22C55E',fontWeight:700,fontSize:13}}>₹{f.revenue.toLocaleString()}</span>
+                </div>
+              </div>
+              <div className="progress-bar">
+                <div className="progress-fill" style={{width:`${f.pct}%`}}/>
+              </div>
+            </div>
+          ))}
+        </div>
+        <div className="card">
+          <div style={{fontWeight:800,color:'#F1F5F9',marginBottom:20,fontSize:15}}>📦 Recent Orders</div>
+          {initOrders.slice(0,5).map((o,i)=>(
+            <div key={i} style={{display:'flex',alignItems:'center',gap:12,marginBottom:14,paddingBottom:14,borderBottom:i<4?'1px solid #1E2D42':'none'}}>
+              <div style={{width:36,height:36,background:'#1A2436',borderRadius:10,display:'flex',alignItems:'center',justifyContent:'center',fontSize:14,fontWeight:800,color:'#FF6B4A',flexShrink:0}}>{o.id.slice(-2)}</div>
+              <div style={{flex:1}}>
+                <div style={{fontSize:13,fontWeight:700,color:'#CBD5E1'}}>{o.customer}</div>
+                <div style={{fontSize:11,color:'#64748B'}}>{o.time} · ₹{o.total}</div>
+              </div>
+              {statusBadge(o.status)}
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── PRODUCTS ──────────────────────────────────────────────
+function Products() {
+  const [prods, setProds] = useState(initProducts);
+  const [showModal, setShowModal] = useState(false);
+  const [editing, setEditing] = useState(null);
+  const [form, setForm] = useState({name:'',emoji:'',category:'Freshwater',price:'',stock:'',custom:false,customEmoji:''});
+  const [selectedPreset, setSelectedPreset] = useState(null);
+  const [useCustom, setUseCustom] = useState(false);
+
+  const openAdd = () => {
+    setEditing(null);
+    setForm({name:'',emoji:'',category:'Freshwater',price:'',stock:'',custom:false});
+    setSelectedPreset(null);
+    setUseCustom(false);
+    setShowModal(true);
+  };
+  const openEdit = (p) => {
+    setEditing(p);
+    setForm({name:p.name,emoji:p.emoji,category:p.category,price:String(p.price),stock:String(p.stock)});
+    setSelectedPreset(null);
+    setUseCustom(p.custom||false);
+    setShowModal(true);
+  };
+  const save = () => {
+    const emoji = useCustom ? form.emoji : (selectedPreset ? selectedPreset.emoji : form.emoji);
+    const name  = useCustom ? form.name  : (selectedPreset ? selectedPreset.name  : form.name);
+    if(!name||!form.price) return;
+    if(editing) {
+      setProds(prods.map(p=>p.id===editing.id?{...p,...form,emoji,name,price:Number(form.price),stock:Number(form.stock)}:p));
+    } else {
+      setProds([...prods,{id:Date.now(),name,emoji,category:form.category,price:Number(form.price),stock:Number(form.stock),active:true,custom:useCustom}]);
+    }
+    setShowModal(false);
+  };
+  const toggle = (id) => setProds(prods.map(p=>p.id===id?{...p,active:!p.active}:p));
+  const del = (id) => setProds(prods.filter(p=>p.id!==id));
+
+  return (
+    <div className="fade-in">
+      <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:24}}>
+        <div>
+          <div className="section-title">Manage Products</div>
+          <div style={{color:'#64748B',fontSize:14,marginTop:3}}>{prods.length} products total</div>
+        </div>
+        <button className="btn-primary" onClick={openAdd}>+ Add Fish Product</button>
+      </div>
+      <div className="card" style={{padding:0}}>
+        <table>
+          <thead><tr>
+            <th>Fish</th><th>Category</th><th>Price</th><th>Stock</th><th>Status</th><th>Actions</th>
+          </tr></thead>
+          <tbody>
+            {prods.map(p=>(
+              <tr key={p.id}>
+                <td>
+                  <div style={{display:'flex',alignItems:'center',gap:12}}>
+                    <div style={{width:44,height:44,background:'#1A2436',borderRadius:10,display:'flex',alignItems:'center',justifyContent:'center',fontSize:24}}>{p.emoji}</div>
+                    <div>
+                      <div style={{fontWeight:700,color:'#F1F5F9',fontSize:14}}>{p.name}</div>
+                      {p.custom && <div style={{fontSize:10,color:'#FF6B4A',fontWeight:600}}>Custom Photo</div>}
+                    </div>
+                  </div>
+                </td>
+                <td><Badge type="blue">{p.category}</Badge></td>
+                <td><span style={{fontWeight:700,color:'#22C55E',fontSize:15}}>₹{p.price}</span><span style={{color:'#64748B',fontSize:12}}>/kg</span></td>
+                <td>
+                  <span style={{color:p.stock<10?'#EF4444':p.stock<15?'#EAB308':'#CBD5E1',fontWeight:700}}>{p.stock} kg</span>
+                  {p.stock<10&&<div style={{fontSize:10,color:'#EF4444'}}>⚠ Low stock</div>}
+                </td>
+                <td>
+                  <label className="toggle">
+                    <input type="checkbox" checked={p.active} onChange={()=>toggle(p.id)}/>
+                    <span className="slider"/>
+                  </label>
+                </td>
+                <td>
+                  <div style={{display:'flex',gap:8}}>
+                    <button className="btn-outline" onClick={()=>openEdit(p)}>Edit</button>
+                    <button className="btn-danger" onClick={()=>del(p.id)}>Delete</button>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {showModal && (
+        <Modal title={editing?'Edit Product':'Add Fish Product'} onClose={()=>setShowModal(false)}>
+          <div style={{marginBottom:18}}>
+            <div style={{display:'flex',gap:10,marginBottom:16}}>
+              <button onClick={()=>setUseCustom(false)} style={{flex:1,padding:'10px',borderRadius:10,border:`2px solid ${!useCustom?'#FF6B4A':'#2D3E55'}`,background:!useCustom?'rgba(255,107,74,.08)':'#0A1020',color:!useCustom?'#FF6B4A':'#64748B',fontFamily:'Plus Jakarta Sans',fontWeight:700,cursor:'pointer'}}>
+                📚 Pick from Library
+              </button>
+              <button onClick={()=>setUseCustom(true)} style={{flex:1,padding:'10px',borderRadius:10,border:`2px solid ${useCustom?'#FF6B4A':'#2D3E55'}`,background:useCustom?'rgba(255,107,74,.08)':'#0A1020',color:useCustom?'#FF6B4A':'#64748B',fontFamily:'Plus Jakarta Sans',fontWeight:700,cursor:'pointer'}}>
+                📷 Custom Upload
+              </button>
+            </div>
+
+            {!useCustom ? (
+              <div>
+                <div className="label">Select Fish</div>
+                <div className="fish-grid">
+                  {FISH_PRESETS.map((f,i)=>(
+                    <div key={i} className={`fish-opt ${selectedPreset?.name===f.name?'selected':''}`}
+                      onClick={()=>{setSelectedPreset(f);setForm({...form,name:f.name,emoji:f.emoji});}}>
+                      <div style={{fontSize:28,marginBottom:4}}>{f.emoji}</div>
+                      <div style={{fontSize:11,fontWeight:600,color:'#94A3B8'}}>{f.name}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <div style={{border:'2px dashed #2D3E55',borderRadius:12,padding:28,textAlign:'center',cursor:'pointer',background:'#0A1020'}}>
+                <div style={{fontSize:36,marginBottom:8}}>📷</div>
+                <div style={{color:'#CBD5E1',fontWeight:600,marginBottom:4}}>Click to upload fish photo</div>
+                <div style={{color:'#64748B',fontSize:12}}>JPG, PNG up to 5MB</div>
+                <input type="file" accept="image/*" style={{display:'none'}}/>
+              </div>
+            )}
+          </div>
+          <hr className="divider"/>
+          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:14}}>
+            <div>
+              <label className="label">Fish Name</label>
+              <input className="input" placeholder="e.g. Rohu" value={form.name}
+                onChange={e=>setForm({...form,name:e.target.value})}/>
+            </div>
+            <div>
+              <label className="label">Category</label>
+              <select className="input select" value={form.category}
+                onChange={e=>setForm({...form,category:e.target.value})}>
+                <option>Freshwater</option>
+                <option>Saltwater</option>
+                <option>Prawns</option>
+                <option>Crab</option>
+                <option>Dry Fish</option>
+              </select>
+            </div>
+            <div>
+              <label className="label">Price (₹ per kg)</label>
+              <input className="input" type="number" placeholder="280" value={form.price}
+                onChange={e=>setForm({...form,price:e.target.value})}/>
+            </div>
+            <div>
+              <label className="label">Stock (kg)</label>
+              <input className="input" type="number" placeholder="20" value={form.stock}
+                onChange={e=>setForm({...form,stock:e.target.value})}/>
+            </div>
+          </div>
+          <div style={{display:'flex',gap:12,marginTop:24}}>
+            <button className="btn-primary" onClick={save} style={{flex:1,padding:'13px'}}>
+              {editing ? 'Save Changes' : 'Add Product'}
+            </button>
+            <button className="btn-outline" onClick={()=>setShowModal(false)} style={{padding:'13px 20px'}}>Cancel</button>
+          </div>
+        </Modal>
+      )}
+    </div>
+  );
+}
+
+// ─── ORDERS ────────────────────────────────────────────────
+function Orders() {
+  const [orders, setOrders] = useState(initOrders);
+  const [filter, setFilter] = useState('All');
+  const [detail, setDetail] = useState(null);
+  const statuses = ['All','Pending','Confirmed','Out for Delivery','Delivered','Cancelled'];
+  const filtered = filter==='All'?orders:orders.filter(o=>o.status===filter);
+
+  const updateStatus = (id, status) => {
+    setOrders(orders.map(o=>o.id===id?{...o,status}:o));
+    if(detail?.id===id) setDetail({...detail,status});
+  };
+
+  return (
+    <div className="fade-in">
+      <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:24}}>
+        <div>
+          <div className="section-title">Manage Orders</div>
+          <div style={{color:'#64748B',fontSize:14,marginTop:3}}>{orders.length} orders today</div>
+        </div>
+      </div>
+      <div style={{display:'flex',gap:8,marginBottom:20,flexWrap:'wrap'}}>
+        {statuses.map(s=>(
+          <button key={s} onClick={()=>setFilter(s)}
+            style={{padding:'7px 16px',borderRadius:20,border:`1px solid ${filter===s?'#FF6B4A':'#2D3E55'}`,
+              background:filter===s?'rgba(255,107,74,.12)':'transparent',
+              color:filter===s?'#FF6B4A':'#64748B',fontFamily:'Plus Jakarta Sans',
+              fontWeight:700,fontSize:13,cursor:'pointer'}}>
+            {s}
+          </button>
+        ))}
+      </div>
+      <div className="card" style={{padding:0}}>
+        <table>
+          <thead><tr>
+            <th>Order ID</th><th>Customer</th><th>Items</th><th>Total</th><th>Status</th><th>Actions</th>
+          </tr></thead>
+          <tbody>
+            {filtered.map(o=>(
+              <tr key={o.id}>
+                <td><span style={{fontWeight:700,color:'#FF6B4A'}}>{o.id}</span><div style={{fontSize:11,color:'#64748B'}}>{o.time}</div></td>
+                <td><div style={{fontWeight:600,color:'#F1F5F9'}}>{o.customer}</div><div style={{fontSize:12,color:'#64748B'}}>{o.phone}</div></td>
+                <td style={{maxWidth:200,color:'#94A3B8',fontSize:13}}>{o.items}</td>
+                <td><span style={{fontWeight:700,color:'#22C55E',fontSize:15}}>₹{o.total}</span></td>
+                <td>{statusBadge(o.status)}</td>
+                <td>
+                  <div style={{display:'flex',gap:8}}>
+                    <button className="btn-outline" onClick={()=>setDetail(o)}>View</button>
+                    {o.status==='Pending'&&<button className="btn-success" onClick={()=>updateStatus(o.id,'Confirmed')}>Confirm</button>}
+                    {o.status==='Confirmed'&&<button className="btn-success" onClick={()=>updateStatus(o.id,'Out for Delivery')}>Dispatch</button>}
+                    {o.status==='Out for Delivery'&&<button className="btn-success" onClick={()=>updateStatus(o.id,'Delivered')}>Delivered</button>}
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {detail && (
+        <Modal title={`Order ${detail.id}`} onClose={()=>setDetail(null)}>
+          <div style={{display:'grid',gap:12}}>
+            {[['Customer',detail.customer],['Phone',detail.phone],['Address',detail.address],['Items',detail.items],['Total','₹'+detail.total]].map(([l,v])=>(
+              <div key={l} style={{display:'flex',justifyContent:'space-between',padding:'10px 14px',background:'#1A2436',borderRadius:10}}>
+                <span style={{color:'#64748B',fontWeight:600,fontSize:13}}>{l}</span>
+                <span style={{color:'#F1F5F9',fontWeight:700,fontSize:13,textAlign:'right',maxWidth:'55%'}}>{v}</span>
+              </div>
+            ))}
+            <div style={{display:'flex',justifyContent:'space-between',padding:'10px 14px',background:'#1A2436',borderRadius:10}}>
+              <span style={{color:'#64748B',fontWeight:600,fontSize:13}}>Status</span>
+              {statusBadge(detail.status)}
+            </div>
+          </div>
+          <hr className="divider"/>
+          <div style={{display:'flex',gap:10,flexWrap:'wrap'}}>
+            {detail.status==='Pending'&&<button className="btn-success" style={{flex:1,padding:12}} onClick={()=>updateStatus(detail.id,'Confirmed')}>✓ Confirm Order</button>}
+            {detail.status==='Confirmed'&&<button className="btn-success" style={{flex:1,padding:12}} onClick={()=>updateStatus(detail.id,'Out for Delivery')}>🛵 Mark Dispatched</button>}
+            {detail.status==='Out for Delivery'&&<button className="btn-success" style={{flex:1,padding:12}} onClick={()=>updateStatus(detail.id,'Delivered')}>✅ Mark Delivered</button>}
+            {!['Delivered','Cancelled'].includes(detail.status)&&<button className="btn-danger" style={{flex:1,padding:12}} onClick={()=>updateStatus(detail.id,'Cancelled')}>✕ Cancel</button>}
+          </div>
+        </Modal>
+      )}
+    </div>
+  );
+}
+
+// ─── CUSTOMERS ─────────────────────────────────────────────
+function Customers() {
+  const [search, setSearch] = useState('');
+  const filtered = initCustomers.filter(c=>c.name.toLowerCase().includes(search.toLowerCase())||c.phone.includes(search));
+  return (
+    <div className="fade-in">
+      <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:24}}>
+        <div>
+          <div className="section-title">Manage Customers</div>
+          <div style={{color:'#64748B',fontSize:14,marginTop:3}}>{initCustomers.length} registered customers</div>
+        </div>
+      </div>
+      <div style={{marginBottom:16}}>
+        <input className="input" placeholder="🔍  Search by name or phone..." value={search}
+          onChange={e=>setSearch(e.target.value)} style={{maxWidth:360}}/>
+      </div>
+      <div className="card" style={{padding:0}}>
+        <table>
+          <thead><tr>
+            <th>Customer</th><th>Phone</th><th>Address</th><th>Orders</th><th>Total Spent</th><th>Joined</th>
+          </tr></thead>
+          <tbody>
+            {filtered.map(c=>(
+              <tr key={c.id}>
+                <td>
+                  <div style={{display:'flex',alignItems:'center',gap:10}}>
+                    <div style={{width:36,height:36,background:'linear-gradient(135deg,rgba(255,107,74,.2),rgba(255,107,74,.05))',borderRadius:50,display:'flex',alignItems:'center',justifyContent:'center',fontWeight:800,color:'#FF6B4A',fontSize:14}}>
+                      {c.name.charAt(0)}
+                    </div>
+                    <span style={{fontWeight:700,color:'#F1F5F9'}}>{c.name}</span>
+                  </div>
+                </td>
+                <td style={{color:'#94A3B8'}}>{c.phone}</td>
+                <td style={{color:'#94A3B8',fontSize:13,maxWidth:180}}>{c.address}</td>
+                <td><Badge type="blue">{c.orders} orders</Badge></td>
+                <td><span style={{fontWeight:700,color:'#22C55E'}}>₹{c.total.toLocaleString()}</span></td>
+                <td style={{color:'#64748B',fontSize:13}}>{c.joined}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+// ─── DAILY REPORT ──────────────────────────────────────────
+function DailyReport() {
+  const today = {orders:24,delivered:18,pending:4,cancelled:2,revenue:14280,avgOrder:595};
+  const fish = [
+    {name:'Rohu',        emoji:'🐟', orders:45, kg:52, revenue:13520},
+    {name:'Tiger Prawns',emoji:'🦐', orders:28, kg:22, revenue:10560},
+    {name:'Pomfret',     emoji:'🐡', orders:22, kg:18, revenue:7560},
+    {name:'Seer Fish',   emoji:'🐟', orders:18, kg:20, revenue:11600},
+    {name:'Mackerel',    emoji:'🐠', orders:35, kg:40, revenue:8000},
+    {name:'Sardine',     emoji:'🐟', orders:30, kg:38, revenue:6080},
+  ];
+
+  return (
+    <div className="fade-in">
+      <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:24}}>
+        <div>
+          <div className="section-title">Daily Report</div>
+          <div style={{color:'#64748B',fontSize:14,marginTop:3}}>Thursday, 12 March 2026</div>
+        </div>
+        <div style={{display:'flex',gap:10}}>
+          <button className="btn-outline" onClick={()=>alert('PDF download started!')}>⬇ Download PDF</button>
+          <button className="btn-primary" onClick={()=>alert('Excel download started!')}>📊 Download Excel</button>
+        </div>
+      </div>
+
+      <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:14,marginBottom:24}}>
+        {[
+          {label:"Total Orders",    val:today.orders,   color:'#FF6B4A', icon:'📦'},
+          {label:"Delivered",       val:today.delivered, color:'#22C55E', icon:'✅'},
+          {label:"Pending",         val:today.pending,   color:'#EAB308', icon:'⏳'},
+          {label:"Cancelled",       val:today.cancelled, color:'#EF4444', icon:'❌'},
+          {label:"Today's Revenue", val:`₹${today.revenue.toLocaleString()}`, color:'#22C55E', icon:'💰'},
+          {label:"Avg Order Value", val:`₹${today.avgOrder}`, color:'#3B82F6', icon:'📊'},
+        ].map((s,i)=>(
+          <div key={i} className="stat-card" style={{display:'flex',alignItems:'center',gap:14}}>
+            <div style={{fontSize:32}}>{s.icon}</div>
+            <div>
+              <div style={{fontSize:24,fontWeight:800,color:s.color,letterSpacing:'-.5px'}}>{s.val}</div>
+              <div style={{fontSize:12,color:'#64748B',fontWeight:600}}>{s.label}</div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div className="card">
+        <div style={{fontWeight:800,color:'#F1F5F9',marginBottom:20,fontSize:15}}>🐟 Product-wise Sales Report</div>
+        <table>
+          <thead><tr>
+            <th>Fish</th><th>Orders</th><th>Quantity (KG)</th><th>Revenue</th><th>Trend</th>
+          </tr></thead>
+          <tbody>
+            {fish.map((f,i)=>(
+              <tr key={i}>
+                <td>
+                  <div style={{display:'flex',alignItems:'center',gap:10}}>
+                    <span style={{fontSize:22}}>{f.emoji}</span>
+                    <span style={{fontWeight:700,color:'#F1F5F9'}}>{f.name}</span>
+                  </div>
+                </td>
+                <td><span style={{fontWeight:700,color:'#CBD5E1'}}>{f.orders}</span></td>
+                <td><span style={{fontWeight:700,color:'#CBD5E1'}}>{f.kg} kg</span></td>
+                <td><span style={{fontWeight:700,color:'#22C55E',fontSize:15}}>₹{f.revenue.toLocaleString()}</span></td>
+                <td>
+                  <div className="progress-bar" style={{width:120}}>
+                    <div className="progress-fill" style={{width:`${Math.round(f.orders/45*100)}%`}}/>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        <div style={{marginTop:20,paddingTop:20,borderTop:'1px solid #1E2D42',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+          <span style={{color:'#64748B',fontWeight:700}}>Grand Total</span>
+          <span style={{color:'#22C55E',fontWeight:900,fontSize:22}}>₹{fish.reduce((a,f)=>a+f.revenue,0).toLocaleString()}</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── OTP MANAGER REMOVED ───────────────────────────────────
+function OTPManager_UNUSED() {
+  const [staff, setStaff] = useState([
+    {id:1, name:'Rajan Kumar',  phone:'9876543210', otp:'4521', generated:true},
+    {id:2, name:'Suresh P',     phone:'9845234561', otp:'8873', generated:true},
+    {id:3, name:'Anil Mohan',   phone:'9744678901', otp:'',     generated:false},
+    {id:4, name:'Biju Thomas',  phone:'9562789012', otp:'',     generated:false},
+  ]);
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [newName, setNewName] = useState('');
+  const [newPhone, setNewPhone] = useState('');
+
+  const genOtp = () => String(Math.floor(1000 + Math.random() * 9000));
+
+  const generateAll = () => setStaff(staff.map(s=>({...s,otp:genOtp(),generated:true})));
+  const generateOne = (id) => setStaff(staff.map(s=>s.id===id?{...s,otp:genOtp(),generated:true}:s));
+  const addStaff = () => {
+    if(!newName||!newPhone) return;
+    setStaff([...staff,{id:Date.now(),name:newName,phone:newPhone,otp:'',generated:false}]);
+    setNewName(''); setNewPhone(''); setShowAddModal(false);
+  };
+  const removeStaff = (id) => setStaff(staff.filter(s=>s.id!==id));
+
+  const today = new Date().toLocaleDateString('en-IN',{day:'numeric',month:'long',year:'numeric'});
+
+  return (
+    <div className="fade-in">
+      <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:24}}>
+        <div>
+          <div className="section-title">OTP Manager</div>
+          <div style={{color:'#64748B',fontSize:14,marginTop:3}}>Daily OTP for delivery staff — {today}</div>
+        </div>
+        <div style={{display:'flex',gap:10}}>
+          <button className="btn-outline" onClick={()=>setShowAddModal(true)}>+ Add Staff</button>
+          <button className="btn-primary" onClick={generateAll}>🔄 Generate All OTPs</button>
+        </div>
+      </div>
+
+      <div className="card" style={{marginBottom:20,background:'rgba(34,197,94,.05)',border:'1px solid rgba(34,197,94,.15)'}}>
+        <div style={{display:'flex',alignItems:'center',gap:12}}>
+          <span style={{fontSize:24}}>ℹ️</span>
+          <div>
+            <div style={{color:'#22C55E',fontWeight:700,fontSize:14}}>How Daily OTP Works</div>
+            <div style={{color:'#94A3B8',fontSize:13,marginTop:2}}>Generate OTPs each morning and share them via WhatsApp. OTPs expire at midnight automatically. Delivery staff enter Name + OTP to login each day.</div>
+          </div>
+        </div>
+      </div>
+
+      <div style={{display:'grid',gap:14}}>
+        {staff.map(s=>(
+          <div key={s.id} className="card-sm" style={{display:'flex',alignItems:'center',gap:16}}>
+            <div style={{width:46,height:46,background:'linear-gradient(135deg,rgba(255,107,74,.15),rgba(255,107,74,.05))',borderRadius:50,display:'flex',alignItems:'center',justifyContent:'center',fontWeight:800,color:'#FF6B4A',fontSize:18,flexShrink:0}}>
+              {s.name.charAt(0)}
+            </div>
+            <div style={{flex:1}}>
+              <div style={{fontWeight:700,color:'#F1F5F9',fontSize:15}}>{s.name}</div>
+              <div style={{color:'#64748B',fontSize:12,marginTop:1}}>{s.phone}</div>
+            </div>
+            {s.generated ? (
+              <div className="otp-box">
+                <div>
+                  <div style={{fontSize:11,color:'#22C55E',fontWeight:700,letterSpacing:.5}}>TODAY'S OTP</div>
+                  <div style={{fontSize:28,fontWeight:900,color:'#F1F5F9',letterSpacing:6}}>{s.otp}</div>
+                </div>
+              </div>
+            ) : (
+              <div style={{color:'#64748B',fontSize:13,fontStyle:'italic'}}>No OTP yet</div>
+            )}
+            <div style={{display:'flex',gap:8,flexShrink:0}}>
+              <button className="btn-success" onClick={()=>generateOne(s.id)}>Generate</button>
+              {s.generated && (
+                <button className="btn-outline" onClick={()=>alert(`WhatsApp:\nHello ${s.name},\nYour FishFresh delivery OTP for today is: ${s.otp}\nValid for today only.`)}>
+                  📤 Share
+                </button>
+              )}
+              <button className="btn-danger" onClick={()=>removeStaff(s.id)}>Remove</button>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {showAddModal && (
+        <Modal title="Add Delivery Staff" onClose={()=>setShowAddModal(false)}>
+          <div style={{display:'flex',flexDirection:'column',gap:14}}>
+            <div>
+              <label className="label">Full Name</label>
+              <input className="input" placeholder="Rajan Kumar" value={newName} onChange={e=>setNewName(e.target.value)}/>
+            </div>
+            <div>
+              <label className="label">Phone Number</label>
+              <input className="input" placeholder="9876543210" type="tel" value={newPhone} onChange={e=>setNewPhone(e.target.value)}/>
+            </div>
+            <div style={{display:'flex',gap:10,marginTop:8}}>
+              <button className="btn-primary" onClick={addStaff} style={{flex:1,padding:12}}>Add Staff Member</button>
+              <button className="btn-outline" onClick={()=>setShowAddModal(false)} style={{padding:'12px 20px'}}>Cancel</button>
+            </div>
+          </div>
+        </Modal>
+      )}
+    </div>
+  );
+}
+
+// ─── SERVICE AREA ──────────────────────────────────────────
+function ServiceArea() {
+  const [pincodes, setPincodes] = useState([
+    {id:1, pin:'695001', area:'Thiruvananthapuram East',  district:'Thiruvananthapuram', active:true,  orders:42},
+    {id:2, pin:'695002', area:'Thiruvananthapuram West',  district:'Thiruvananthapuram', active:true,  orders:38},
+    {id:3, pin:'695003', area:'Kowdiar',                  district:'Thiruvananthapuram', active:true,  orders:55},
+    {id:4, pin:'695004', area:'Pattom',                   district:'Thiruvananthapuram', active:true,  orders:29},
+    {id:5, pin:'695005', area:'Vellayambalam',            district:'Thiruvananthapuram', active:true,  orders:31},
+    {id:6, pin:'695006', area:'Kesavadasapuram',          district:'Thiruvananthapuram', active:false, orders:0},
+    {id:7, pin:'695007', area:'Ambalamukku',              district:'Thiruvananthapuram', active:true,  orders:18},
+    {id:8, pin:'695008', area:'Thampanoor',               district:'Thiruvananthapuram', active:false, orders:0},
+  ]);
+
+  const [showModal, setShowModal] = useState(false);
+  const [form, setForm] = useState({pin:'', area:'', district:'Thiruvananthapuram'});
+  const [search, setSearch] = useState('');
+  const [filterStatus, setFilterStatus] = useState('All');
+  const [bulkInput, setBulkInput] = useState('');
+  const [showBulk, setShowBulk] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(null);
+
+  const activeCount   = pincodes.filter(p=>p.active).length;
+  const inactiveCount = pincodes.filter(p=>!p.active).length;
+  const totalOrders   = pincodes.reduce((a,p)=>a+p.orders,0);
+
+  const filtered = pincodes.filter(p=>{
+    const matchSearch = p.pin.includes(search) || p.area.toLowerCase().includes(search.toLowerCase());
+    const matchStatus = filterStatus==='All' ? true : filterStatus==='Active' ? p.active : !p.active;
+    return matchSearch && matchStatus;
+  });
+
+  const toggle = (id) => setPincodes(pincodes.map(p=>p.id===id?{...p,active:!p.active}:p));
+
+  const addPin = () => {
+    if(form.pin.length!==6||!form.area) return;
+    if(pincodes.find(p=>p.pin===form.pin)) { alert('PIN code already exists!'); return; }
+    setPincodes([...pincodes,{id:Date.now(),pin:form.pin,area:form.area,district:form.district,active:true,orders:0}]);
+    setForm({pin:'',area:'',district:'Thiruvananthapuram'});
+    setShowModal(false);
+  };
+
+  const deletePin = (id) => { setPincodes(pincodes.filter(p=>p.id!==id)); setConfirmDelete(null); };
+
+  const addBulk = () => {
+    const lines = bulkInput.split('\n').map(l=>l.trim()).filter(l=>l);
+    const newPins = [];
+    lines.forEach(line=>{
+      const parts = line.split(',').map(s=>s.trim());
+      if(parts[0]?.length===6 && !pincodes.find(p=>p.pin===parts[0])) {
+        newPins.push({id:Date.now()+Math.random(),pin:parts[0],area:parts[1]||'Unknown Area',district:parts[2]||'Thiruvananthapuram',active:true,orders:0});
+      }
+    });
+    if(newPins.length===0){alert('No valid new PIN codes found.\nFormat: 695001, Area Name, District');return;}
+    setPincodes([...pincodes,...newPins]);
+    setBulkInput('');
+    setShowBulk(false);
+    alert(`✅ Added ${newPins.length} PIN code(s) successfully!`);
+  };
+
+  const enableAll  = () => setPincodes(pincodes.map(p=>({...p,active:true})));
+  const disableAll = () => setPincodes(pincodes.map(p=>({...p,active:false})));
+
+  return (
+    <div className="fade-in">
+      {/* Header */}
+      <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:24,flexWrap:'wrap',gap:12}}>
+        <div>
+          <div className="section-title">📍 Service Area Management</div>
+          <div style={{color:'#64748B',fontSize:14,marginTop:3}}>Control which PIN codes can place orders in your app</div>
+        </div>
+        <div style={{display:'flex',gap:10,flexWrap:'wrap'}}>
+          <button className="btn-outline" onClick={()=>setShowBulk(true)}>+ Bulk Add PINs</button>
+          <button className="btn-primary" onClick={()=>setShowModal(true)}>+ Add PIN Code</button>
+        </div>
+      </div>
+
+      {/* Info Banner */}
+      <div style={{background:'rgba(59,130,246,.07)',border:'1px solid rgba(59,130,246,.2)',borderRadius:14,padding:'14px 18px',marginBottom:20,display:'flex',alignItems:'center',gap:12}}>
+        <span style={{fontSize:22}}>💡</span>
+        <div style={{fontSize:13,color:'#94A3B8',lineHeight:1.6}}>
+          Customers in the app will see <strong style={{color:'#F1F5F9'}}>"Sorry, we don't deliver to your area"</strong> if their PIN code is not in this list or is set to <strong style={{color:'#EF4444'}}>Inactive</strong>. Only <strong style={{color:'#22C55E'}}>Active</strong> PIN codes can place orders.
+        </div>
+      </div>
+
+      {/* Stats Row */}
+      <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:14,marginBottom:24}}>
+        {[
+          {label:'Active PIN Codes',   val:activeCount,   color:'#22C55E', icon:'✅'},
+          {label:'Inactive PIN Codes', val:inactiveCount, color:'#EF4444', icon:'🚫'},
+          {label:'Total Orders from Active Areas', val:totalOrders, color:'#3B82F6', icon:'📦'},
+        ].map((s,i)=>(
+          <div key={i} className="stat-card" style={{display:'flex',alignItems:'center',gap:14}}>
+            <span style={{fontSize:30}}>{s.icon}</span>
+            <div>
+              <div style={{fontSize:26,fontWeight:800,color:s.color,letterSpacing:'-.5px'}}>{s.val}</div>
+              <div style={{fontSize:12,color:'#64748B',fontWeight:600}}>{s.label}</div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Search + Filter + Bulk Actions */}
+      <div style={{display:'flex',gap:12,marginBottom:16,flexWrap:'wrap',alignItems:'center'}}>
+        <input className="input" placeholder="🔍  Search PIN or area name..."
+          value={search} onChange={e=>setSearch(e.target.value)} style={{maxWidth:280}}/>
+        <div style={{display:'flex',gap:8}}>
+          {['All','Active','Inactive'].map(s=>(
+            <button key={s} onClick={()=>setFilterStatus(s)}
+              style={{padding:'8px 16px',borderRadius:20,border:`1px solid ${filterStatus===s?'#FF6B4A':'#2D3E55'}`,
+                background:filterStatus===s?'rgba(255,107,74,.12)':'transparent',
+                color:filterStatus===s?'#FF6B4A':'#64748B',
+                fontFamily:'Plus Jakarta Sans',fontWeight:700,fontSize:13,cursor:'pointer'}}>
+              {s}
+            </button>
+          ))}
+        </div>
+        <div style={{marginLeft:'auto',display:'flex',gap:8}}>
+          <button className="btn-success" onClick={enableAll} style={{fontSize:12,padding:'7px 14px'}}>Enable All</button>
+          <button className="btn-danger"  onClick={disableAll} style={{fontSize:12,padding:'7px 14px'}}>Disable All</button>
+        </div>
+      </div>
+
+      {/* Table */}
+      <div className="card" style={{padding:0}}>
+        <table>
+          <thead><tr>
+            <th>PIN Code</th>
+            <th>Area Name</th>
+            <th>District</th>
+            <th>Orders Received</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr></thead>
+          <tbody>
+            {filtered.length===0 && (
+              <tr><td colSpan={6} style={{textAlign:'center',padding:40,color:'#64748B'}}>
+                No PIN codes found matching your search.
+              </td></tr>
+            )}
+            {filtered.map(p=>(
+              <tr key={p.id}>
+                <td>
+                  <div style={{display:'flex',alignItems:'center',gap:10}}>
+                    <div style={{width:38,height:38,background:p.active?'rgba(34,197,94,.1)':'rgba(239,68,68,.1)',
+                      borderRadius:10,display:'flex',alignItems:'center',justifyContent:'center',
+                      fontSize:14,fontWeight:800,color:p.active?'#22C55E':'#EF4444'}}>
+                      📍
+                    </div>
+                    <span style={{fontWeight:800,color:'#F1F5F9',fontSize:15,letterSpacing:.5}}>{p.pin}</span>
+                  </div>
+                </td>
+                <td style={{fontWeight:600,color:'#CBD5E1'}}>{p.area}</td>
+                <td><span className="badge badge-blue">{p.district}</span></td>
+                <td>
+                  {p.orders > 0
+                    ? <span style={{fontWeight:700,color:'#3B82F6'}}>{p.orders} orders</span>
+                    : <span style={{color:'#64748B',fontSize:13}}>No orders yet</span>}
+                </td>
+                <td>
+                  <label className="toggle">
+                    <input type="checkbox" checked={p.active} onChange={()=>toggle(p.id)}/>
+                    <span className="slider"/>
+                  </label>
+                  <div style={{fontSize:10,marginTop:4,color:p.active?'#22C55E':'#EF4444',fontWeight:700}}>
+                    {p.active?'Active':'Inactive'}
+                  </div>
+                </td>
+                <td>
+                  <button className="btn-danger" onClick={()=>setConfirmDelete(p)}>Remove</button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Add PIN Modal */}
+      {showModal && (
+        <Modal title="Add New PIN Code" onClose={()=>setShowModal(false)}>
+          <div style={{display:'flex',flexDirection:'column',gap:14}}>
+            <div>
+              <label className="label">PIN Code (6 digits)</label>
+              <input className="input" placeholder="e.g. 695009" maxLength={6}
+                value={form.pin} onChange={e=>setForm({...form,pin:e.target.value.replace(/\D/g,'')})}/>
+            </div>
+            <div>
+              <label className="label">Area / Locality Name</label>
+              <input className="input" placeholder="e.g. Kazhakkoottam"
+                value={form.area} onChange={e=>setForm({...form,area:e.target.value})}/>
+            </div>
+            <div>
+              <label className="label">District</label>
+              <select className="input select" value={form.district}
+                onChange={e=>setForm({...form,district:e.target.value})}>
+                <option>Thiruvananthapuram</option>
+                <option>Kollam</option>
+                <option>Pathanamthitta</option>
+                <option>Alappuzha</option>
+                <option>Kottayam</option>
+                <option>Idukki</option>
+                <option>Ernakulam</option>
+                <option>Thrissur</option>
+                <option>Palakkad</option>
+                <option>Malappuram</option>
+                <option>Kozhikode</option>
+                <option>Wayanad</option>
+                <option>Kannur</option>
+                <option>Kasaragod</option>
+              </select>
+            </div>
+            <div style={{background:'rgba(255,107,74,.07)',border:'1px solid rgba(255,107,74,.2)',borderRadius:10,padding:'10px 14px',fontSize:13,color:'#94A3B8'}}>
+              📱 Once added and set to <strong style={{color:'#22C55E'}}>Active</strong>, customers with this PIN code can place orders in the app.
+            </div>
+            <div style={{display:'flex',gap:10,marginTop:4}}>
+              <button className="btn-primary" onClick={addPin} style={{flex:1,padding:13}}>Add PIN Code</button>
+              <button className="btn-outline" onClick={()=>setShowModal(false)} style={{padding:'13px 20px'}}>Cancel</button>
+            </div>
+          </div>
+        </Modal>
+      )}
+
+      {/* Bulk Add Modal */}
+      {showBulk && (
+        <Modal title="Bulk Add PIN Codes" onClose={()=>setShowBulk(false)}>
+          <div style={{fontSize:13,color:'#94A3B8',marginBottom:12,background:'#1A2436',borderRadius:10,padding:'10px 14px',lineHeight:1.8}}>
+            📋 <strong style={{color:'#F1F5F9'}}>Format:</strong> One PIN per line<br/>
+            <code style={{color:'#FF6B4A'}}>695009, Kazhakkoottam, Thiruvananthapuram</code><br/>
+            <code style={{color:'#FF6B4A'}}>695010, Technopark, Thiruvananthapuram</code>
+          </div>
+          <textarea className="input" rows={8} placeholder={"695009, Kazhakkoottam, Thiruvananthapuram\n695010, Technopark, Thiruvananthapuram\n695011, Vizhinjam, Thiruvananthapuram"}
+            value={bulkInput} onChange={e=>setBulkInput(e.target.value)}
+            style={{resize:'vertical',lineHeight:1.7,fontFamily:'monospace'}}/>
+          <div style={{display:'flex',gap:10,marginTop:16}}>
+            <button className="btn-primary" onClick={addBulk} style={{flex:1,padding:13}}>Add All PIN Codes</button>
+            <button className="btn-outline" onClick={()=>setShowBulk(false)} style={{padding:'13px 20px'}}>Cancel</button>
+          </div>
+        </Modal>
+      )}
+
+      {/* Confirm Delete Modal */}
+      {confirmDelete && (
+        <Modal title="Remove PIN Code?" onClose={()=>setConfirmDelete(null)}>
+          <div style={{textAlign:'center',padding:'10px 0 20px'}}>
+            <div style={{fontSize:48,marginBottom:14}}>🗑️</div>
+            <div style={{color:'#F1F5F9',fontSize:16,fontWeight:700,marginBottom:8}}>
+              Remove PIN <span style={{color:'#FF6B4A'}}>{confirmDelete.pin}</span>?
+            </div>
+            <div style={{color:'#64748B',fontSize:13}}>
+              {confirmDelete.area}, {confirmDelete.district}<br/>
+              Customers in this area will no longer be able to order.
+            </div>
+          </div>
+          <div style={{display:'flex',gap:10}}>
+            <button className="btn-danger" onClick={()=>deletePin(confirmDelete.id)}
+              style={{flex:1,padding:13,fontSize:14}}>Yes, Remove</button>
+            <button className="btn-outline" onClick={()=>setConfirmDelete(null)}
+              style={{flex:1,padding:13}}>Cancel</button>
+          </div>
+        </Modal>
+      )}
+    </div>
+  );
+}
+
+// ─── SUPABASE CONFIG ───────────────────────────────────────
+// ⚠️ REPLACE these two values with your own from Supabase → Settings → API
+const SUPABASE_URL  = 'https://spnabtonfkzgxkzbwvtp.supabase.co';
+const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNwbmFidG9uZmt6Z3hremJ3dnRwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MTYzMzAsImV4cCI6MjA4ODk5MjMzMH0.xeG9o9mU-CnPRITKAVqYMmWQOPqSdTFkZi0tCdOoTqc';
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+
+// ─── PASSWORD STRENGTH CHECKER ─────────────────────────────
+function checkStrength(pwd) {
+  const rules = [
+    { label: 'At least 8 characters',       ok: pwd.length >= 8 },
+    { label: 'One uppercase letter (A-Z)',   ok: /[A-Z]/.test(pwd) },
+    { label: 'One lowercase letter (a-z)',   ok: /[a-z]/.test(pwd) },
+    { label: 'One number (0-9)',             ok: /[0-9]/.test(pwd) },
+    { label: 'One special character (!@#$)', ok: /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(pwd) },
+  ];
+  const passed = rules.filter(r => r.ok).length;
+  const strength = passed <= 2 ? 'Weak' : passed <= 4 ? 'Medium' : 'Strong';
+  const color    = passed <= 2 ? '#EF4444' : passed <= 4 ? '#EAB308' : '#22C55E';
+  return { rules, passed, strength, color };
+}
+
+// ─── LOGIN SCREEN ──────────────────────────────────────────
+function LoginScreen({ onLogin }) {
+  const [email, setEmail]       = useState('');
+  const [pwd, setPwd]           = useState('');
+  const [showPwd, setShowPwd]   = useState(false);
+  const [error, setError]       = useState('');
+  const [loading, setLoading]   = useState(false);
+  const [view, setView]         = useState('login'); // 'login' | 'forgot' | 'reset' | 'sent'
+  const [resetEmail, setResetEmail] = useState('');
+  const [resetMsg, setResetMsg] = useState('');
+  const [newPwd, setNewPwd]     = useState('');
+  const [confirmPwd, setConfirmPwd] = useState('');
+  const [showNew, setShowNew]   = useState(false);
+  const strength = checkStrength(newPwd);
+
+  // Check if redirected back from password reset email link
+  useEffect(() => {
+    const hash = window.location.hash;
+    if (hash.includes('type=recovery')) {
+      setView('reset');
+    }
+  }, []);
+
+  const handleLogin = async () => {
+    setError(''); setLoading(true);
+    try {
+      const { error: err } = await supabase.auth.signInWithPassword({ email, password: pwd });
+      if (err) { setError(err.message); setLoading(false); return; }
+      onLogin();
+    } catch(e) { setError('Connection failed. Check your Supabase URL & Key.'); setLoading(false); }
+  };
+
+  const handleForgot = async () => {
+    if (!resetEmail) { setResetMsg('Please enter your email.'); return; }
+    setLoading(true); setResetMsg('');
+    try {
+      const { error: err } = await supabase.auth.resetPasswordForEmail(resetEmail, {
+        redirectTo: window.location.href,
+      });
+      if (err) { setResetMsg(err.message); setLoading(false); return; }
+      setView('sent');
+    } catch(e) { setResetMsg('Connection failed.'); }
+    setLoading(false);
+  };
+
+  const handleReset = async () => {
+    if (newPwd !== confirmPwd) { setError('Passwords do not match.'); return; }
+    if (strength.passed < 5)  { setError('Password is not strong enough.'); return; }
+    setLoading(true); setError('');
+    try {
+      const { error: err } = await supabase.auth.updateUser({ password: newPwd });
+      if (err) { setError(err.message); setLoading(false); return; }
+      window.location.hash = '';
+      setView('login');
+      setError('');
+      alert('✅ Password updated successfully! Please log in with your new password.');
+    } catch(e) { setError('Failed to update password.'); }
+    setLoading(false);
+  };
+
+  const centerBox = {minHeight:'100vh',background:'#0A1020',display:'flex',alignItems:'center',justifyContent:'center'};
+  const box       = {width:440,background:'#131E2E',border:'1px solid #1E2D42',borderRadius:24,padding:40,maxWidth:'95vw'};
+  const logoBlock = (
+    <div style={{textAlign:'center',marginBottom:32}}>
+      <div style={{width:72,height:72,background:'linear-gradient(135deg,#FF6B4A,#FF8C6E)',borderRadius:20,
+        display:'flex',alignItems:'center',justifyContent:'center',fontSize:38,margin:'0 auto 16px'}}>🐟</div>
+      <div style={{fontSize:24,fontWeight:800,color:'#F1F5F9',letterSpacing:'-.5px'}}>FishFresh Admin</div>
+      <div style={{color:'#64748B',marginTop:6,fontSize:14}}>
+        {view==='login'  && 'Sign in to manage your store'}
+        {view==='forgot' && 'Reset your password'}
+        {view==='sent'   && 'Check your email'}
+        {view==='reset'  && 'Set a new password'}
+      </div>
+    </div>
+  );
+
+  // ── LOGIN VIEW ──
+  if(view === 'login') return (
+    <div style={centerBox}><div style={box}>
+      {logoBlock}
+      <div style={{marginBottom:14}}>
+        <label className="label">Email Address</label>
+        <input className="input" type="email" placeholder="admin@fishfresh.in"
+          value={email} onChange={e=>{setEmail(e.target.value);setError('');}}
+          onKeyDown={e=>e.key==='Enter'&&handleLogin()}/>
+      </div>
+      <div style={{marginBottom:8}}>
+        <label className="label">Password</label>
+        <div style={{position:'relative'}}>
+          <input className="input" type={showPwd?'text':'password'} placeholder="Enter your password"
+            value={pwd} onChange={e=>{setPwd(e.target.value);setError('');}}
+            onKeyDown={e=>e.key==='Enter'&&handleLogin()}
+            style={{paddingRight:48}}/>
+          <button onClick={()=>setShowPwd(!showPwd)}
+            style={{position:'absolute',right:14,top:'50%',transform:'translateY(-50%)',
+              background:'none',border:'none',cursor:'pointer',color:'#64748B',fontSize:16}}>
+            {showPwd?'🙈':'👁️'}
+          </button>
+        </div>
+      </div>
+      <div style={{textAlign:'right',marginBottom:20}}>
+        <button onClick={()=>setView('forgot')}
+          style={{background:'none',border:'none',color:'#FF6B4A',fontSize:13,fontWeight:700,
+            cursor:'pointer',fontFamily:'Plus Jakarta Sans'}}>
+          Forgot Password?
+        </button>
+      </div>
+      {error && (
+        <div style={{background:'rgba(239,68,68,.1)',border:'1px solid rgba(239,68,68,.2)',
+          borderRadius:10,padding:'10px 14px',color:'#EF4444',fontSize:13,marginBottom:16,textAlign:'center'}}>
+          ⚠️ {error}
+        </div>
+      )}
+      <button className="btn-primary" style={{width:'100%',padding:14,fontSize:15}}
+        onClick={handleLogin} disabled={loading}>
+        {loading ? '⏳ Signing in...' : 'Sign In →'}
+      </button>
+      <div style={{marginTop:24,background:'#1A2436',borderRadius:12,padding:'12px 16px',fontSize:12,color:'#64748B'}}>
+        🔒 <strong style={{color:'#94A3B8'}}>Secure Login</strong> — Powered by Supabase Auth.<br/>
+        Your session stays active until you log out.
+      </div>
+    </div></div>
+  );
+
+  // ── FORGOT PASSWORD VIEW ──
+  if(view === 'forgot') return (
+    <div style={centerBox}><div style={box}>
+      {logoBlock}
+      <div style={{background:'rgba(59,130,246,.08)',border:'1px solid rgba(59,130,246,.2)',
+        borderRadius:12,padding:'12px 16px',fontSize:13,color:'#94A3B8',marginBottom:20,lineHeight:1.7}}>
+        📧 Enter your admin email. We'll send a <strong style={{color:'#F1F5F9'}}>password reset link</strong> to your inbox.
+      </div>
+      <div style={{marginBottom:20}}>
+        <label className="label">Admin Email</label>
+        <input className="input" type="email" placeholder="admin@fishfresh.in"
+          value={resetEmail} onChange={e=>{setResetEmail(e.target.value);setResetMsg('');}}/>
+      </div>
+      {resetMsg && (
+        <div style={{color:'#EF4444',fontSize:13,marginBottom:14,textAlign:'center'}}>⚠️ {resetMsg}</div>
+      )}
+      <button className="btn-primary" style={{width:'100%',padding:14,fontSize:15,marginBottom:12}}
+        onClick={handleForgot} disabled={loading}>
+        {loading ? '⏳ Sending...' : '📧 Send Reset Link'}
+      </button>
+      <button onClick={()=>setView('login')}
+        style={{width:'100%',padding:12,background:'none',border:'none',color:'#64748B',
+          fontSize:14,cursor:'pointer',fontFamily:'Plus Jakarta Sans',fontWeight:600}}>
+        ← Back to Login
+      </button>
+    </div></div>
+  );
+
+  // ── EMAIL SENT VIEW ──
+  if(view === 'sent') return (
+    <div style={centerBox}><div style={{...box,textAlign:'center'}}>
+      {logoBlock}
+      <div style={{fontSize:56,marginBottom:20}}>📬</div>
+      <div style={{color:'#F1F5F9',fontSize:18,fontWeight:800,marginBottom:10}}>Check your inbox!</div>
+      <div style={{color:'#64748B',fontSize:14,lineHeight:1.8,marginBottom:24}}>
+        A password reset link was sent to<br/>
+        <strong style={{color:'#FF6B4A'}}>{resetEmail}</strong><br/>
+        Click the link in the email to set a new password.
+      </div>
+      <div style={{background:'#1A2436',borderRadius:12,padding:'12px 16px',fontSize:13,color:'#94A3B8',marginBottom:24,textAlign:'left',lineHeight:1.7}}>
+        📌 <strong style={{color:'#F1F5F9'}}>Tip:</strong> Check your spam/junk folder if you don't see it within 2 minutes.
+      </div>
+      <button onClick={()=>setView('login')}
+        style={{background:'none',border:'none',color:'#FF6B4A',fontSize:14,fontWeight:700,
+          cursor:'pointer',fontFamily:'Plus Jakarta Sans'}}>
+        ← Back to Login
+      </button>
+    </div></div>
+  );
+
+  // ── RESET PASSWORD VIEW (after clicking email link) ──
+  if(view === 'reset') return (
+    <div style={centerBox}><div style={box}>
+      {logoBlock}
+      <div style={{marginBottom:14}}>
+        <label className="label">New Password</label>
+        <div style={{position:'relative'}}>
+          <input className="input" type={showNew?'text':'password'} placeholder="Enter new password"
+            value={newPwd} onChange={e=>setNewPwd(e.target.value)} style={{paddingRight:48}}/>
+          <button onClick={()=>setShowNew(!showNew)}
+            style={{position:'absolute',right:14,top:'50%',transform:'translateY(-50%)',
+              background:'none',border:'none',cursor:'pointer',color:'#64748B',fontSize:16}}>
+            {showNew?'🙈':'👁️'}
+          </button>
+        </div>
+      </div>
+
+      {/* Strength meter */}
+      {newPwd.length > 0 && (
+        <div style={{marginBottom:16}}>
+          <div style={{display:'flex',justifyContent:'space-between',marginBottom:6}}>
+            <span style={{fontSize:12,color:'#64748B',fontWeight:600}}>Password Strength</span>
+            <span style={{fontSize:12,fontWeight:800,color:strength.color}}>{strength.strength}</span>
+          </div>
+          <div style={{display:'flex',gap:4,marginBottom:10}}>
+            {[1,2,3,4,5].map(i=>(
+              <div key={i} style={{flex:1,height:4,borderRadius:4,
+                background:i<=strength.passed?strength.color:'#2D3E55',transition:'background .3s'}}/>
+            ))}
+          </div>
+          <div style={{display:'grid',gap:4}}>
+            {strength.rules.map((r,i)=>(
+              <div key={i} style={{display:'flex',alignItems:'center',gap:8,fontSize:12}}>
+                <span style={{color:r.ok?'#22C55E':'#64748B'}}>{r.ok?'✅':'○'}</span>
+                <span style={{color:r.ok?'#94A3B8':'#64748B'}}>{r.label}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <div style={{marginBottom:20}}>
+        <label className="label">Confirm New Password</label>
+        <input className="input" type="password" placeholder="Re-enter new password"
+          value={confirmPwd} onChange={e=>setConfirmPwd(e.target.value)}/>
+        {confirmPwd && newPwd !== confirmPwd && (
+          <div style={{color:'#EF4444',fontSize:12,marginTop:6}}>⚠️ Passwords do not match</div>
+        )}
+        {confirmPwd && newPwd === confirmPwd && (
+          <div style={{color:'#22C55E',fontSize:12,marginTop:6}}>✅ Passwords match</div>
+        )}
+      </div>
+
+      {error && (
+        <div style={{background:'rgba(239,68,68,.1)',border:'1px solid rgba(239,68,68,.2)',
+          borderRadius:10,padding:'10px 14px',color:'#EF4444',fontSize:13,marginBottom:16}}>
+          ⚠️ {error}
+        </div>
+      )}
+      <button className="btn-primary" style={{width:'100%',padding:14,fontSize:15}}
+        onClick={handleReset} disabled={loading||strength.passed<5||newPwd!==confirmPwd}>
+        {loading ? '⏳ Updating...' : '🔐 Set New Password'}
+      </button>
+    </div></div>
+  );
+
+  return null;
+}
+
+// ─── ROOT APP ──────────────────────────────────────────────
+function App() {
+  const [page, setPage]     = useState('dashboard');
+  const [session, setSession] = useState(null);
+  const [checking, setChecking] = useState(true);
+  const [adminEmail, setAdminEmail] = useState('');
+
+  useEffect(() => {
+    // Check existing session on load
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      if(session?.user?.email) setAdminEmail(session.user.email);
+      setChecking(false);
+    });
+    // Listen for auth changes (login, logout, password reset)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+      if(session?.user?.email) setAdminEmail(session.user.email);
+    });
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    setSession(null);
+  };
+
+  // Loading state while checking session
+  if(checking) return (
+    <div style={{minHeight:'100vh',background:'#0A1020',display:'flex',alignItems:'center',justifyContent:'center'}}>
+      <div style={{textAlign:'center'}}>
+        <div style={{fontSize:48,marginBottom:16}}>🐟</div>
+        <div style={{color:'#64748B',fontSize:14}}>Loading...</div>
+      </div>
+    </div>
+  );
+
+  // Not logged in → show login screen
+  if(!session) return <LoginScreen onLogin={()=>supabase.auth.getSession().then(({data:{session}})=>setSession(session))}/>;
+
+  const pages = {
+    dashboard:   <Dashboard/>,
+    products:    <Products/>,
+    orders:      <Orders/>,
+    customers:   <Customers/>,
+    report:      <DailyReport/>,
+    servicearea: <ServiceArea/>,
+  };
+
+  const now = new Date().toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+
+  return (
+    <div>
+      <Sidebar page={page} setPage={setPage}/>
+      <div className="main">
+        <div className="topbar">
+          <div style={{flex:1,fontSize:15,fontWeight:700,color:'#F1F5F9',textTransform:'capitalize'}}>
+            {page==='servicearea' ? 'Service Area' : page.charAt(0).toUpperCase()+page.slice(1)}
+          </div>
+          <div style={{background:'#1A2436',padding:'6px 14px',borderRadius:30,fontSize:12,color:'#64748B',fontWeight:600}}>
+            📅 {now}
+          </div>
+          <div style={{background:'#1A2436',padding:'6px 14px',borderRadius:30,fontSize:12,color:'#94A3B8',fontWeight:600,display:'flex',alignItems:'center',gap:6}}>
+            <span style={{width:7,height:7,background:'#22C55E',borderRadius:'50%',display:'inline-block'}}/>
+            {adminEmail}
+          </div>
+          <button onClick={handleLogout} className="btn-outline" style={{padding:'7px 14px',color:'#EF4444',borderColor:'rgba(239,68,68,.3)'}}>
+            Logout
+          </button>
+        </div>
+        <div className="content">{pages[page]}</div>
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</body>
+</html>
